@@ -39,8 +39,13 @@ public class SendUserInputToServer implements Runnable {
         String messaggio;
         Scanner tastiera = new Scanner(System.in);
         DatagramPacket userDatagram;
+        String username;
 
         try {
+            System.out.println("USERNAME: ");
+            username= tastiera.nextLine();
+            
+            System.out.println("Puoi procedere con la comunicazione");
             System.out.print("> ");
             do {
                 //Leggo da tastiera il messaggio utente vuole inviare
