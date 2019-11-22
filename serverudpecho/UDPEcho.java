@@ -11,7 +11,10 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,6 +47,7 @@ public class UDPEcho implements Runnable {
     }
 
     public void run() {
+        
         DatagramPacket answer; //datagram usato per creare il pacchetto di risposta
         byte[] buffer = new byte[8192]; //buffer per contenere il messaggio ricevuto o da inviare
         // creo un un datagramma UDP usando il buffer come contenitore per i messaggi
@@ -54,9 +58,11 @@ public class UDPEcho implements Runnable {
         String clientID;
         //la stringa con il messaggio ricevuto
         String message;
+        LinkedList <String> ultimi10messaggi= new LinkedList<String>();
 
         while (!Thread.interrupted()) {
             try {
+                
                 socket.receive(request); //mi metto in attesa di ricevere pacchetto da un clinet
                 client.addr = request.getAddress(); //e memorizzo indirizzo
                 client.port = request.getPort();    //e porta
@@ -67,12 +73,26 @@ public class UDPEcho implements Runnable {
                 if (clients.get(clientID) == null) {
                     //nel caso sia la prima volta lo inserisco nella lista
                     clients.put(clientID, new Clients(client.addr, client.port));
+                    for(int i=0; i<ultimi10messaggi.size();i++) {
+                    	answer = new DatagramPacket(ultimi10messaggi.get(i).getBytes(), ultimi10messaggi.get(i).getBytes().length, client.addr, client.port);
+                        socket.send(answer);
+                    }
                 }
                 System.out.println(clients);
-                message = new String(request.getData(), 0, request.getLength(), "ISO-8859-1");
+                message= new String(request.getData(),0,request.getLength(),"ISO-8859-1");
+                
+                
                 if (message == "quit") {
                     //client si e' rimosso da chat, lo rimuovo da lista dei client connessi
                     clients.remove(clientID);
+                    
+                }
+                if(ultimi10messaggi.size()<10)
+                        ultimi10messaggi.add(message);
+                
+                else {
+                	ultimi10messaggi.removeLast();
+                	ultimi10messaggi.addFirst(message);
                 }
 
                 //invio il messaggio ricevuto a tutti i client connessi al server
